@@ -10,7 +10,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"sync"
 )
 
 func main() {
@@ -20,27 +19,13 @@ func main() {
 	}
 	defer file.Close()
 
-	line, err := lineCounter(file)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	log.Println("line number", line)
-
-	var wg sync.WaitGroup
-	wg.Add(line)
-
-	file, err = os.Open("./output/meta")
 	scanner := bufio.NewScanner(file)
 	// scan on comma? https://golang.org/src/bufio/example_test.go
 	scanner.Split(bufio.ScanLines)
 
 	// Scan.
 	for scanner.Scan() {
-		go func(url string) {
-			defer wg.Done()
-
+		func(url string) {
 			fmt.Println("url is ", url)
 
 			resp, err := http.Get(url)
@@ -65,9 +50,6 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		fmt.Fprintln(os.Stderr, "reading input:", err)
 	}
-
-	fmt.Println("go")
-	wg.Wait()
 }
 
 func lineCounter(r io.Reader) (int, error) {
